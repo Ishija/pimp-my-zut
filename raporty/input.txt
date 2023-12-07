@@ -3,5 +3,6 @@
 8:15 07.12.2023
 Artur Karczmarczyk
 Aplikacje Internetowe
-1018
+1018 #sumaryczna liczba pkt
++18 #zmiany pkt. względem poprzednich zajęć
 [opinia1, opinia2, opinia3]
