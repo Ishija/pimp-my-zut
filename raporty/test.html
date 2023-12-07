@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TEST</title>
+</head>
+<body>
+
+    <input type="file" id="file-input" />
+    <button id="download-btn">dl JSON</button>
+
+    <script>
+        var fileContent = "";
+
+        document.getElementById("file-input").addEventListener("change", function(event) {
+            var file = event.target.files[0];
+            var reader = new FileReader();
+
+            reader.onload = function(e) {
+                fileContent = e.target.result;
+            };
+
+            reader.readAsText(file);
+        });
+
+        document.getElementById("download-btn").addEventListener("click", function() {
+            var jsonContent = JSON.stringify({ content: fileContent });
+
+            var fileName = "raport.json";
+            var element = document.createElement('a');
+            element.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(jsonContent));
+            element.setAttribute('download', fileName);
+
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        });
+    </script>
+
+</body>
+</html>
