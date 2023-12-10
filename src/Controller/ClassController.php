@@ -17,6 +17,14 @@ class ClassController extends AbstractController
         $api = new ZutEduAPI();
         $data = $api->getClassData($classId);
 
+        if (count($data) == 1) {
+            echo "Nie udało się znaleźć zajęć :(";
+            echo "<BR>";
+            echo json_encode($data);
+
+            return new Response();
+        }
+
         $currentClass = $data[1]; // assume it's sorted
 
         $lecturer = $currentClass["worker"];

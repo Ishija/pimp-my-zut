@@ -14,7 +14,7 @@ class ZutEduAPI {
 
     public function getAPIJson(string $id) : String {
         $startDate = $this->getStartDate();
-        $endDate = $this->getStartDate()->modify("+2 days");
+        $endDate = $this->getStartDate()->modify("+2 hours");
 
         $query_arr = array (
             'room' => $id,
