@@ -8,7 +8,7 @@ class ZutEduAPI {
     private const API_BASE = "https://plan.zut.edu.pl/schedule_student.php";
 
     public function __construct() {}
-    public function getClassData(string $id, $now) : array {
+    public function getMeetingData(string $id, $now) : array {
         $json = $this->getAPIJson($id, $now);
 
         return json_decode($json, true);
