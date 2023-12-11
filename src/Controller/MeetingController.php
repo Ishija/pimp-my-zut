@@ -14,11 +14,11 @@ class MeetingController extends AbstractController
 
     private const NO_MEETINGS = "Nie udało się znaleźć zajęć :(";
 
-    #[Route('/meeting/{meetingId}')] # meetingId = meeting id (for example: WI WI1- 316)
-    public function show(string $meetingId, #[MapQueryParameter] string $now = 'now') : Response
+    #[Route('/meeting/{roomId}')] # roomId = room (for example: WI WI1- 316)
+    public function show(string $roomId, #[MapQueryParameter] string $now = 'now') : Response
     {
         $api = new ZutEduAPI();
-        $data = $api->getMeetingData($meetingId, new \DateTime($now));
+        $data = $api->getMeetingData($roomId, new \DateTime($now));
 
         if (count($data) == 1) {
             echo self::NO_MEETINGS;
@@ -35,7 +35,7 @@ class MeetingController extends AbstractController
         $lecturer = $currentClass["worker"];
         $subject = $currentClass["subject"];
 
-        echo $meetingId;
+        echo $roomId;
         echo "<BR>";
         echo $lecturer;
         echo "<BR>";
