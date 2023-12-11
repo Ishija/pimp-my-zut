@@ -2,30 +2,35 @@
 
 namespace App\Controller;
 
-use App\ZutEduAPI;
+use App\Service\ZutEduAPI;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\Routing\Annotation\Route;
 
 class ClassController extends AbstractController
 {
     #Generating QRs: https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl={LINK}
 
-    #[Route('/class/{classId}')] # id = class id (for example: WI WI1- 316)
-    public function show(string $classId) : Response
+    private const NO_CLASSES = "Nie udało się znaleźć zajęć :(";
+
+    #[Route('/class/{classId}')] # classId = class id (for example: WI WI1- 316)
+    public function show(string $classId, #[MapQueryParameter] string $now = 'now') : Response
     {
         $api = new ZutEduAPI();
-        $data = $api->getClassData($classId);
+        $data = $api->getClassData($classId, new \DateTime($now));
 
         if (count($data) == 1) {
-            echo "Nie udało się znaleźć zajęć :(";
-            echo "<BR>";
-            echo json_encode($data);
-
+            echo self::NO_CLASSES;
             return new Response();
         }
 
-        $currentClass = $data[1]; // assume it's sorted
+        $currentClass = $this->getCurrentClass($data);
+
+        if (empty($currentClass)) {
+            echo self::NO_CLASSES;
+            return new Response();
+        }
 
         $lecturer = $currentClass["worker"];
         $subject = $currentClass["subject"];
@@ -37,5 +42,25 @@ class ClassController extends AbstractController
         echo $subject;
 
         return new Response();
+    }
+
+    private function getCurrentClass(array $data) : array {
+        $now = ZutEduAPI::getNow();
+
+        foreach($data as $d) {
+            if (!array_key_exists("title", $d)) {
+                continue;
+            }
+
+            $start = new \DateTime($d["start"]);
+            $end = new \DateTime($d["end"]);
+
+            if ($start->format("Y-m-d H:i:s") < $now->format("Y-m-d H:i:s") &&
+                $end->format("Y-m-d H:i:s") > $now->format("Y-m-d H:i:s")) {
+                return $d;
+            }
+        }
+
+        return [];
     }
 }

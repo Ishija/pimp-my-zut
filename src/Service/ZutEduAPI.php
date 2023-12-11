@@ -1,20 +1,22 @@
 <?php
 
-namespace  App;
+namespace  App\Service;
+
+use DateTimeZone;
 
 class ZutEduAPI {
     private const API_BASE = "https://plan.zut.edu.pl/schedule_student.php";
 
     public function __construct() {}
-    public function getClassData(string $id) : array {
-        $json = $this->getAPIJson($id);
+    public function getClassData(string $id, $now) : array {
+        $json = $this->getAPIJson($id, $now);
 
         return json_decode($json, true);
     }
 
-    public function getAPIJson(string $id) : String {
-        $startDate = $this->getStartDate();
-        $endDate = $this->getStartDate()->modify("+2 hours");
+    public function getAPIJson(string $id, $now) : String {
+        $startDate = clone $now;
+        $endDate = (clone $now)->modify("+1 day");
 
         $query_arr = array (
             'room' => $id,
@@ -27,9 +29,7 @@ class ZutEduAPI {
         return file_get_contents(self::API_BASE.'?'.$query);
     }
 
-    private function getStartDate() : \DateTime { //TODO different start date finding??
-        $now = new \DateTime();
-
-        return $now;
+    public static function getNow() : \DateTime {
+        return new \DateTime('now', new DateTimeZone('Europe/Warsaw'));
     }
 }
