@@ -7,8 +7,10 @@
 
     <input type="file" id="file-input" />
     <button id="download-btn" style="display: none;">Pobierz JSON</button>
+    <button id="download-xlsx-btn">Pobierz Excel</button>
     <pre id="json-display"></pre>
 
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.13.1/xlsx.full.min.js"></script> 
     <script>
 		var jsonContent;
 	
@@ -48,6 +50,8 @@
                 });
 
                 jsonContent = JSON.stringify(reportData, null, 2);
+
+                
                 document.getElementById("json-display").textContent = jsonContent;
                 document.getElementById("download-btn").style.display = 'inline';
             };
@@ -66,6 +70,40 @@
             element.click();
             document.body.removeChild(element);
         });
+    
+        document.getElementById("download-xlsx-btn").addEventListener("click", function() {
+            createAndDownloadXLSX();
+        });
+
+        function createAndDownloadXLSX() {
+            var data = JSON.parse(jsonContent);
+
+            var wb = XLSX.utils.book_new();
+            var ws = XLSX.utils.json_to_sheet([data], {header:["start_time", "date", "instructor", "course", "total_points", "change_in_points"]});
+
+            XLSX.utils.book_append_sheet(wb, ws, "Raport");
+
+            ws['F2'].s = {
+                fill: {
+                    patternType: "solid",
+                    fgColor: getColor(data.change_in_points)
+                }
+            };
+
+            XLSX.writeFile(wb, "raport.xlsx");
+        }
+
+        function getColor(value) {
+            switch(value) {
+                case -2: return { rgb: "FF0000" }; // Ciemnoczerwony
+                case -1: return { rgb: "FFA500" }; // Pomarańczowy
+                case  1: return { rgb: "90EE90" }; // Jasnozielony
+                case  2: return { rgb: "008000" }; // Ciemnozielony
+                default: return {};
+            }
+        }
+
+
     </script>
 
 </body>
