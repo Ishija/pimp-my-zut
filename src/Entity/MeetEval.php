@@ -23,8 +23,9 @@ class MeetEval
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $creation_time = null;
 
-    #[ORM\Column]
-    private ?int $meeting_id = null;
+    #[ORM\ManyToOne(inversedBy: 'meetEvals')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Meetings $meeting = null;
 
     public function getId(): ?int
     {
@@ -67,14 +68,14 @@ class MeetEval
         return $this;
     }
 
-    public function getMeetingId(): ?int
+    public function getMeeting(): ?Meetings
     {
-        return $this->meeting_id;
+        return $this->meeting;
     }
 
-    public function setMeetingId(int $meeting_id): static
+    public function setMeeting(?Meetings $meeting): static
     {
-        $this->meeting_id = $meeting_id;
+        $this->meeting = $meeting;
 
         return $this;
     }

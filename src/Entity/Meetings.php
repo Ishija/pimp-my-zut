@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\MeetingsRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -14,8 +16,9 @@ class Meetings
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
-    private ?int $prof_id = null;
+    #[ORM\ManyToOne(inversedBy: 'meetings')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Professor $prof = null;
 
     #[ORM\Column(length: 255)]
     private ?string $meeting_room = null;
@@ -32,19 +35,27 @@ class Meetings
     #[ORM\Column(nullable: true)]
     private ?int $score_sum = null;
 
+    #[ORM\OneToMany(mappedBy: 'meeting', targetEntity: MeetEval::class)]
+    private Collection $meetEvals;
+
+    public function __construct()
+    {
+        $this->meetEvals = new ArrayCollection();
+    }
+
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getProfId(): ?int
+    public function getProf(): ?Professor
     {
-        return $this->prof_id;
+        return $this->prof;
     }
 
-    public function setProfId(int $prof_id): static
+    public function setProf(?Professor $prof): static
     {
-        $this->prof_id = $prof_id;
+        $this->prof = $prof;
 
         return $this;
     }
@@ -105,6 +116,36 @@ class Meetings
     public function setScoreSum(?int $score_sum): static
     {
         $this->score_sum = $score_sum;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, MeetEval>
+     */
+    public function getMeetEvals(): Collection
+    {
+        return $this->meetEvals;
+    }
+
+    public function addMeetEval(MeetEval $meetEval): static
+    {
+        if (!$this->meetEvals->contains($meetEval)) {
+            $this->meetEvals->add($meetEval);
+            $meetEval->setMeeting($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMeetEval(MeetEval $meetEval): static
+    {
+        if ($this->meetEvals->removeElement($meetEval)) {
+            // set the owning side to null (unless already changed)
+            if ($meetEval->getMeeting() === $this) {
+                $meetEval->setMeeting(null);
+            }
+        }
 
         return $this;
     }
