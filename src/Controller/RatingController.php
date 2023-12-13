@@ -2,50 +2,50 @@
 
 namespace App\Controller;
 
+use App\Service\ZutEduAPI;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Serializer\Serializer;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 
 class RatingController extends AbstractController
 {
     public function __construct(private LoggerInterface $logger){}
 
-    #[Route('/rating/{id}')]
-    public function getLecture(int $id): Response
+    #[Route('/rating/{roomId}')] # roomId = room (for example: WI WI1- 316)
+    public function getLecture(string $roomId, #[MapQueryParameter] string $now = 'now'): Response
     {
-        if($id == 0){ // ok
-            $lecture = new LectureData(235, "Testowanie Oprogramowania", "WI2-120", "Jan Nowak", 1702368900, 1702374300);
+        $api = new ZutEduAPI();
+        $data = $api->getMeetingData($roomId, new \DateTime($now));
 
-            return $this->render("ratingPage.html.twig", [
-                'id' => $lecture->id,
-                'name' => $lecture->name,
-                'lecturer' => $lecture->lecturer,
-                'room' => $lecture->room,
-                'start' => $lecture->getStart(),
-                'end' => $lecture->getEnd()
-            ]);
-        }
-        else if($id == 1){ // ok
-            $lecture = new LectureData(127, "Aplikaje Internetowe", "WI1-302", "Adam Kowalski", 1702203300, 1702208700);
-
-            return $this->render("ratingPage.html.twig", [
-                'id' => $lecture->id,
-                'name' => $lecture->name,
-                'lecturer' => $lecture->lecturer,
-                'room' => $lecture->room,
-                'start' => $lecture->getStart(),
-                'end' => $lecture->getEnd()
-            ]);
-        }
-        else{ // brak przedmiotu do oceny
+        if (count($data) == 1) {
             return $this->render("error.html.twig", ['message' => "Brak sali/przedmiotu do oceny"]);
         }
+
+        $currentClass = $this->getCurrentMeeting($data, new \DateTime($now));
+
+        if (empty($currentClass)) {
+            return $this->render("error.html.twig", ['message' => "Brak sali/przedmiotu do oceny"]);
+        }
+
+        $lecture = new LectureData(
+            $currentClass["title"],
+            $roomId,
+            $currentClass["worker"],
+            new \DateTime($currentClass["start"]),
+            new \DateTime($currentClass["end"])
+        );
+
+        return $this->render("ratingPage.html.twig", [
+            'id' => 0, // TODO ?
+            'name' => $lecture->name,
+            'lecturer' => $lecture->lecturer,
+            'room' => $lecture->room,
+            'start' => $lecture->getStart(),
+            'end' => $lecture->getEnd()
+        ]);
     }
 
     #[Route('/add')]
@@ -66,6 +66,24 @@ class RatingController extends AbstractController
         
         return $this->render("thanksForRate.html.twig");
     }
+
+    private function getCurrentMeeting(array $data, $now) : array {
+        foreach($data as $d) {
+            if (!array_key_exists("title", $d)) {
+                continue;
+            }
+
+            $start = new \DateTime($d["start"]);
+            $end = new \DateTime($d["end"]);
+
+            if ($start->format("Y-m-d H:i:s") < $now->format("Y-m-d H:i:s") &&
+                $end->format("Y-m-d H:i:s") > $now->format("Y-m-d H:i:s")) {
+                return $d;
+            }
+        }
+
+        return [];
+    }
 }
 
 class RateData{
@@ -81,15 +99,13 @@ class RateData{
 }
 
 class LectureData{
-    public $id;
     public $name;
     public $room;
     public $lecturer;
-    private $start;
-    private $end;
+    private \DateTime $start;
+    private \DateTime $end;
 
-    public function __construct(int $id, string $name, string $room, string $lecturer, int $start, int $end){
-        $this->id = $id;
+    public function __construct(string $name, string $room, string $lecturer, \DateTime $start, \DateTime $end){
         $this->name = $name;
         $this->room = $room;
         $this->lecturer = $lecturer;
@@ -99,11 +115,11 @@ class LectureData{
 
     public function getStart(): string
     {
-        return date("H:i", $this->start);
+        return $this->start->format("H:i");
     }
 
     public function getEnd(): string
     {
-        return date("H:i", $this->end);
+        return $this->end->format("H:i");
     }
 }
