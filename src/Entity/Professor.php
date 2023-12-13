@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\ProfessorRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ProfessorRepository::class)]
@@ -21,6 +23,14 @@ class Professor
 
     #[ORM\Column]
     private ?int $total_score = null;
+
+    #[ORM\OneToMany(mappedBy: 'prof', targetEntity: Meetings::class)]
+    private Collection $meetings;
+
+    public function __construct()
+    {
+        $this->meetings = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -59,6 +69,36 @@ class Professor
     public function setTotalScore(int $total_score): static
     {
         $this->total_score = $total_score;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Meetings>
+     */
+    public function getMeetings(): Collection
+    {
+        return $this->meetings;
+    }
+
+    public function addMeeting(Meetings $meeting): static
+    {
+        if (!$this->meetings->contains($meeting)) {
+            $this->meetings->add($meeting);
+            $meeting->setProf($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMeeting(Meetings $meeting): static
+    {
+        if ($this->meetings->removeElement($meeting)) {
+            // set the owning side to null (unless already changed)
+            if ($meeting->getProf() === $this) {
+                $meeting->setProf(null);
+            }
+        }
 
         return $this;
     }
