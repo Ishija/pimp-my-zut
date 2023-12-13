@@ -9,10 +9,16 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
-
+use App\Entity\MeetEval;
+use App\Entity\Meetings;
+use App\Entity\Professor;
+use Doctrine\ORM\EntityManagerInterface;
 class RatingController extends AbstractController
 {
-    public function __construct(private LoggerInterface $logger){}
+    public function __construct(
+        private LoggerInterface $logger,
+        private EntityManagerInterface $entityManager
+    ) {}
 
     #[Route('/rating/{roomId}')] # roomId = room (for example: WI WI1- 316)
     public function getLecture(string $roomId, #[MapQueryParameter] string $now = 'now'): Response
@@ -49,21 +55,62 @@ class RatingController extends AbstractController
     }
 
     #[Route('/add')]
-    public function addRate(Request $request) : Response{
+    public function addRate(Request $request): Response
+    {
         $id = $request->request->get("lecture-id");
         $rate = $request->request->get("emoji-rate");
         $opinion = $request->request->get("rate-opinion");
 
-        if($id == null){
+        if ($id == null) {
             return $this->render("error.html.twig", ['message' => "Brak id wykładu"]);
         }
 
-        if($rate == null){
+        if ($rate == null) {
             return $this->render("error.html.twig", ['message' => "Nie podano oceny"]);
         }
 
-        $rateData = new RateData($id, $rate, $opinion); // TODO
-        
+        // Convert RateData to MeetEval entity and persist it
+        $meetEval = new MeetEval();
+        $meetEval->setScore($rate);
+        $meetEval->setInfo($opinion);
+        $meetEval->setCreationTime(new \DateTime());
+
+        // Check if the meeting exists
+        $meeting = $this->entityManager->getRepository(Meetings::class)->find($id);
+
+        if (!$meeting) {
+            // If the meeting does not exist, create a new one
+            $meeting = new Meetings();
+            $meeting->setMeetingRoom("Room"); // Set the meeting room accordingly
+            $meeting->setMeetingName("Meeting"); // Set the meeting name accordingly
+            $meeting->setMeetingStart(new \DateTime());
+            $meeting->setMeetingEnd(new \DateTime());
+
+            // Check if the professor exists
+            $professor = $this->entityManager->getRepository(Professor::class)->findOneBy(['teacher' => 'Teacher']); // Replace 'Teacher' with the actual teacher name
+
+            if (!$professor) {
+                // If the professor does not exist, create a new one
+                $professor = new Professor();
+                $professor->setTeacher("Teacher"); // Set the professor name accordingly
+                $professor->setEmail("teacher@example.com"); // Set the professor email accordingly
+                $professor->setTotalScore(0);
+            }
+
+            $meeting->setProf($professor);
+        }
+
+        $meeting->addMeetEval($meetEval);
+
+        // Update total score of the professor
+        $professor = $meeting->getProf();
+        $professor->setTotalScore($professor->getTotalScore() + $rate);
+
+        $this->entityManager->persist($meetEval);
+        $this->entityManager->persist($meeting);
+        $this->entityManager->persist($professor);
+        $this->entityManager->flush();
+
         return $this->render("thanksForRate.html.twig");
     }
 
