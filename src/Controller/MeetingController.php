@@ -15,8 +15,7 @@ class MeetingController extends AbstractController
     private const NO_MEETINGS = "Nie udało się znaleźć zajęć :(";
 
     #[Route('/meeting/{roomId}')] # roomId = room (for example: WI WI1- 316)
-    public function show(string $roomId, #[MapQueryParameter] string $now = 'now') : Response
-    {
+    public function show(string $roomId, #[MapQueryParameter] string $now = 'now') : Response {
         $api = new ZutEduAPI();
         $data = $api->getMeetingData($roomId, new \DateTime($now));
 
@@ -25,7 +24,7 @@ class MeetingController extends AbstractController
             return new Response();
         }
 
-        $currentClass = $this->getCurrentMeeting($data);
+        $currentClass = $this->getCurrentMeeting($data, new \DateTime($now));
 
         if (empty($currentClass)) {
             echo self::NO_MEETINGS;
@@ -44,9 +43,7 @@ class MeetingController extends AbstractController
         return new Response();
     }
 
-    private function getCurrentMeeting(array $data) : array {
-        $now = ZutEduAPI::getNow();
-
+    private function getCurrentMeeting(array $data, $now) : array {
         foreach($data as $d) {
             if (!array_key_exists("title", $d)) {
                 continue;
