@@ -6,25 +6,60 @@
 <body>
 
     <input type="file" id="file-input" />
-    <button id="download-btn">dl JSON</button>
+    <button id="download-btn" style="display: none;">Pobierz JSON</button>
+    <button id="download-xlsx-btn">Pobierz Excel</button>
+    <pre id="json-display"></pre>
 
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.13.1/xlsx.full.min.js"></script> 
     <script>
-        var fileContent = "";
-
+		var jsonContent;
+	
         document.getElementById("file-input").addEventListener("change", function(event) {
             var file = event.target.files[0];
             var reader = new FileReader();
 
             reader.onload = function(e) {
-                fileContent = e.target.result;
+                var fileContent = e.target.result;
+                var lines = fileContent.split("\n").slice(1); // Omit 1st line
+
+                var reportData = {
+                    start_time: lines[0].trim(),
+                    date: lines[1].trim(),
+                    instructor: lines[2].trim(),
+                    course: lines[3].trim(),
+                    total_points: parseInt(lines[4].trim()),
+                    change_in_points: parseInt(lines[5].trim()),
+                    opinions: []
+                };
+
+                var opinion = "";
+                var inOpinion = false;
+
+                lines.slice(6).forEach(function(line) {
+                    line = line.trim();
+                    if (line.startsWith("{")) {
+                        opinion = line;
+                        inOpinion = true;
+                    } else if (line.endsWith("}")) {
+                        opinion += " " + line;
+                        reportData.opinions.push(opinion.slice(1, -1).trim());
+                        inOpinion = false;
+                    } else if (inOpinion) {
+                        opinion += " " + line;
+                    }
+                });
+
+                jsonContent = JSON.stringify(reportData, null, 2);
+
+                
+                document.getElementById("json-display").textContent = jsonContent;
+                document.getElementById("download-btn").style.display = 'inline';
             };
 
             reader.readAsText(file);
         });
 
         document.getElementById("download-btn").addEventListener("click", function() {
-            var jsonContent = JSON.stringify({ content: fileContent });
-
             var fileName = "raport.json";
             var element = document.createElement('a');
             element.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(jsonContent));
@@ -35,6 +70,40 @@
             element.click();
             document.body.removeChild(element);
         });
+    
+        document.getElementById("download-xlsx-btn").addEventListener("click", function() {
+            createAndDownloadXLSX();
+        });
+
+        function createAndDownloadXLSX() {
+            var data = JSON.parse(jsonContent);
+
+            var wb = XLSX.utils.book_new();
+            var ws = XLSX.utils.json_to_sheet([data], {header:["start_time", "date", "instructor", "course", "total_points", "change_in_points"]});
+
+            XLSX.utils.book_append_sheet(wb, ws, "Raport");
+
+            ws['F2'].s = {
+                fill: {
+                    patternType: "solid",
+                    fgColor: getColor(data.change_in_points)
+                }
+            };
+
+            XLSX.writeFile(wb, "raport.xlsx");
+        }
+
+        function getColor(value) {
+            switch(value) {
+                case -2: return { rgb: "FF0000" }; // Ciemnoczerwony
+                case -1: return { rgb: "FFA500" }; // Pomarańczowy
+                case  1: return { rgb: "90EE90" }; // Jasnozielony
+                case  2: return { rgb: "008000" }; // Ciemnozielony
+                default: return {};
+            }
+        }
+
+
     </script>
 
 </body>
