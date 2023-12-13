@@ -41,7 +41,14 @@ class Professor
     {
         return $this->teacher;
     }
+    public function generateEmail(): void
+    {
+        $nameParts = explode(' ', $this->teacher);
+        $lastName = $nameParts[0] ?? '';
+        $firstName = $nameParts[1] ?? '';
 
+        $this->email = strtolower($firstName . '.' . $lastName . '@zut.edu.pl');
+    }
     public function setTeacher(string $teacher): static
     {
         $this->teacher = $teacher;
@@ -102,4 +109,5 @@ class Professor
 
         return $this;
     }
+
 }

@@ -92,7 +92,7 @@ class RatingController extends AbstractController
                 // If the professor does not exist, create a new one
                 $professor = new Professor();
                 $professor->setTeacher($lecturer); // Set the professor name accordingly
-                $professor->setEmail("teacher@example.com"); // Set the professor email accordingly
+                $professor->generateEmail(); // Set the professor email accordingly
                 $professor->setTotalScore(100);
             }
 
