@@ -45,7 +45,6 @@ class RatingController extends AbstractController
         );
 
         return $this->render("ratingPage.html.twig", [
-            'id' => 0, // TODO ?
             'name' => $lecture->name,
             'lecturer' => $lecture->lecturer,
             'room' => $lecture->room,
@@ -57,13 +56,14 @@ class RatingController extends AbstractController
     #[Route('/add')]
     public function addRate(Request $request): Response
     {
-        $id = $request->request->get("lecture-id");
         $rate = $request->request->get("emoji-rate");
         $opinion = $request->request->get("rate-opinion");
 
-        if ($id == null) {
-            return $this->render("error.html.twig", ['message' => "Brak id wykładu"]);
-        }
+        $name = $request->request->get("lecture-name");
+        $lecturer = $request->request->get("lecture-teacher");
+        $room = $request->request->get("lecture-room");
+        $start = $request->request->get("lecture-start");
+        $end = $request->request->get("lecture-end");
 
         if ($rate == null) {
             return $this->render("error.html.twig", ['message' => "Nie podano oceny"]);
@@ -76,26 +76,27 @@ class RatingController extends AbstractController
         $meetEval->setCreationTime(new \DateTime());
 
         // Check if the meeting exists
-        $meeting = $this->entityManager->getRepository(Meetings::class)->find($id);
+        $meeting = $this->entityManager->getRepository(Meetings::class)->findOneBy(['meeting_room' => $room, 'meeting_start' => new \DateTime($start)]);
 
         if (!$meeting) {
-            // If the meeting does not exist, create a new one
             $meeting = new Meetings();
-            $meeting->setMeetingRoom("Room"); // Set the meeting room accordingly
-            $meeting->setMeetingName("Meeting"); // Set the meeting name accordingly
-            $meeting->setMeetingStart(new \DateTime());
-            $meeting->setMeetingEnd(new \DateTime());
+            $meeting->setMeetingRoom($room);
+            $meeting->setMeetingName($name);
+            $meeting->setMeetingStart(new \DateTime($start));
+            $meeting->setMeetingEnd(new \DateTime($end));
 
             // Check if the professor exists
-            $professor = $this->entityManager->getRepository(Professor::class)->findOneBy(['teacher' => 'Teacher']); // Replace 'Teacher' with the actual teacher name
+            $professor = $this->entityManager->getRepository(Professor::class)->findOneBy(['teacher' => $lecturer]); // Replace 'Teacher' with the actual teacher name
 
             if (!$professor) {
                 // If the professor does not exist, create a new one
                 $professor = new Professor();
-                $professor->setTeacher("Teacher"); // Set the professor name accordingly
-                $professor->setEmail("teacher@example.com"); // Set the professor email accordingly
-                $professor->setTotalScore(0);
+                $professor->setTeacher($lecturer); // Set the professor name accordingly
+                $professor->generateEmail(); // Set the professor email accordingly
+                $professor->setTotalScore(100);
             }
+
+            $professor->setTotalScore($professor->getTotalScore() + $rate);
 
             $meeting->setProf($professor);
         }

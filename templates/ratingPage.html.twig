@@ -133,7 +133,13 @@
             <div class="rating-container">
                 <form action="../add" method="post">
                 <h2>Ocena:</h2>
-                <input id="lecture-id" type="hidden" name="lecture-id" value="{{ id }}">
+
+                <input id="lecture-name" type="hidden" name="lecture-name" value="{{ name }}">
+                <input id="lecture-teacher" type="hidden" name="lecture-teacher" value="{{ lecturer }}">
+                <input id="lecture-room" type="hidden" name="lecture-room" value="{{ room }}">
+                <input id="lecture-start" type="hidden" name="lecture-start" value="{{ start }}">
+                <input id="lecture-end" type="hidden" name="lecture-end" value="{{ end }}">
+
                 <input type="radio" name="emoji-rate" id="rate-very-unhappy" value="-2">
 				<label onclick="enb()" for="rate-very-unhappy">☹️</label>
 				
