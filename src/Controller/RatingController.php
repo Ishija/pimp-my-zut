@@ -103,7 +103,7 @@ class RatingController extends AbstractController
                 $professor->setTotalScore(100);
             }
 
-            $professor->setTotalScore($professor->getTotalScore() + $rate);
+
 
             $meeting->setProf($professor);
         }
