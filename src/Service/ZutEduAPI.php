@@ -14,7 +14,7 @@ class ZutEduAPI {
 
     private function getAPIJson(string $id, $now) : string {
         $startDate = clone $now;
-        $endDate = (clone $now)->modify("+2 days");
+        $endDate = (clone $now)->modify("+1 day");
 
         $query_arr = array (
             'room' => $id,

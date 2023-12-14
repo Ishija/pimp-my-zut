@@ -13,7 +13,7 @@
             <div>Room: {{ meeting.meetingRoom }}    </div>
             <div>Start Time: {{ meeting.meetingStart|date('Y-m-d H:i:s') }} </div>
             <div>End Time:{{ meeting.meetingEnd|date('Y-m-d H:i:s') }}  </div>
-            <button><a href="/admin/download">Download Report</a></button>
+            <button><a href="/admin/{{ meeting.id }}">Download Report</a></button>
         </div>
     {% endfor %}
 </div>

@@ -132,6 +132,41 @@ class RatingController extends AbstractController
 
         return [];
     }
+
+    public function calculateScoreSumForMeetingById(int $meetingId): void
+    {
+        // Retrieve the Meetings entity by ID
+        $meeting = $this->entityManager->getRepository(Meetings::class)->find($meetingId);
+
+        if (!$meeting) {
+            throw $this->createNotFoundException('Meeting not found');
+        }
+
+        $scoreSum = $this->calculateScoreSumForMeeting($meeting);
+
+        // Set the calculated score_sum for the meeting
+        $meeting->setScoreSum($scoreSum);
+
+        // Persist the changes
+        $this->entityManager->persist($meeting);
+
+        // Flush changes to the database
+        $this->entityManager->flush();
+    }
+
+    private function calculateScoreSumForMeeting(Meetings $meeting): int
+    {
+        // Retrieve all MeetEval entities for the given meeting
+        $meetEvals = $this->entityManager->getRepository(MeetEval::class)->findBy(['meeting' => $meeting]);
+
+        // Calculate the sum of scores
+        $scoreSum = 0;
+        foreach ($meetEvals as $meetEval) {
+            $scoreSum += $meetEval->getScore();
+        }
+
+        return $scoreSum;
+    }
 }
 
 class RateData{

@@ -7,6 +7,7 @@ use App\Repository\ProfessorRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use App\Service\Raport;
 
 class AdminController extends AbstractController
 {
@@ -18,11 +19,12 @@ class AdminController extends AbstractController
             "meetings" => $meetings
         ]);
     }
-    #[Route('/admin/download', name: 'app_admin_download')]
-    public function donwload_excel(MeetingsRepository $meetingsRepository): Response
+    #[Route('/admin/{meeting_id}', name: 'app_admin_download')]
+    public function download_excel(MeetingsRepository $meetingsRepository, int $meeting_id): Response
     {
-        //funkcja generowania pliku
-        return new Response();
+        $raport = new Raport($meetingsRepository);
+        $raport->generateReport($meeting_id);
 
+        return new Response();
     }
 }
