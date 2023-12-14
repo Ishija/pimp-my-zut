@@ -26,13 +26,13 @@ class RatingController extends AbstractController
     public function getLecture(string $roomId, #[MapQueryParameter] string $now = 'now'): Response
     {
         $api = new ZutEduAPI();
-        $data = $api->getMeetingData($roomId, new \DateTime($now));
+        $data = $api->getMeetingData($roomId, new \DateTime($now, new \DateTimeZone("Europe/Warsaw")));
 
         if (count($data) == 1) {
             return $this->render("error.html.twig", ['message' => "Brak sali/przedmiotu do oceny"]);
         }
 
-        $currentClass = $this->getCurrentMeeting($data, new \DateTime($now));
+        $currentClass = $this->getCurrentMeeting($data, new \DateTime($now, new \DateTimeZone("Europe/Warsaw")));
 
         if (empty($currentClass)) {
             return $this->render("error.html.twig", ['message' => "Brak sali/przedmiotu do oceny"]);
@@ -126,16 +126,17 @@ class RatingController extends AbstractController
     }
 
     private function getCurrentMeeting(array $data, $now) : array {
+        $nowT = strtotime($now->format("Y-m-d H:i:s"));
         foreach($data as $d) {
             if (!array_key_exists("title", $d)) {
                 continue;
             }
 
-            $start = new \DateTime($d["start"]);
-            $end = new \DateTime($d["end"]);
+            $start = strtotime($d["start"]);
+            $end = strtotime($d["end"]);
 
-            if ($start->format("Y-m-d H:i:s") < $now->format("Y-m-d H:i:s") &&
-                $end->format("Y-m-d H:i:s") > $now->format("Y-m-d H:i:s")) {
+            if ($start < $nowT &&
+                $end > $nowT) {
                 return $d;
             }
         }
