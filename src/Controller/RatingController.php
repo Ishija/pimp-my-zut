@@ -3,7 +3,9 @@
 namespace App\Controller;
 
 use App\Service\ZutEduAPI;
+use http\Cookie;
 use Psr\Log\LoggerInterface;
+use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\MapQueryParameter;
@@ -56,6 +58,11 @@ class RatingController extends AbstractController
     #[Route('/add')]
     public function addRate(Request $request): Response
     {
+        $survey_dl = $request->cookies->get("survey_delay");
+        if(new \DateTime($survey_dl) > new \DateTime()){
+            return $this->render("error.html.twig", ['message' => "Za szybko!!!"]);
+        }
+
         $rate = $request->request->get("emoji-rate");
         $opinion = $request->request->get("rate-opinion");
 
@@ -112,7 +119,10 @@ class RatingController extends AbstractController
         $this->entityManager->persist($professor);
         $this->entityManager->flush();
 
-        return $this->render("thanksForRate.html.twig");
+        $contents = $this->renderView("thanksForRate.html.twig");
+        $response= new Response($contents);
+        $response->headers->setCookie(new \Symfony\Component\HttpFoundation\Cookie("survey_delay",(new \DateTime("+15 minutes"))->format("Y-m-d H:i:s")));
+        return $response;
     }
 
     private function getCurrentMeeting(array $data, $now) : array {
